@@ -45,8 +45,8 @@ def wrapper(jetson):
     # http://docs.ros.org/api/diagnostic_msgs/html/msg/DiagnosticStatus.html
     arr = DiagnosticArray()
     arr.status = [
-        DiagnosticStatus(name='jetson_stats CPU', message='Jetson-stats CPU', hardware_id="NVIDIA Jetson"),
-        DiagnosticStatus(name='jetson_stats GPU', message='jetson-stats GPU', hardware_id="NVIDIA Jetson")
+        DiagnosticStatus(name='jetson_stats CPU', message='Jetson-stats CPU', hardware_id=board["board"]["name"]),
+        DiagnosticStatus(name='jetson_stats GPU', message='jetson-stats GPU', hardware_id=board["board"]["name"])
     ]
     # Initialization Tegrastats
     while not rospy.is_shutdown():
