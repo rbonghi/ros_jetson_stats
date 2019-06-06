@@ -30,27 +30,38 @@
 
 
 import rospy
-from std_msgs.msg import String
+from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus
 from jtop import Tegrastats
 
 
-def wrapper():
+def wrapper(jetson):
     # Initialization ros pubblisher
-    pub = rospy.Publisher('jtop', String, queue_size=10)
-    # Initialization ros node
-    rospy.init_node('jtop', anonymous=True)
-    rate = rospy.Rate(10)  # Set default rate jetson stats 10hz
+    pub = rospy.Publisher('/diagnostics', DiagnosticArray, queue_size=1)
+    # Set default rate jetson stats 2hz
+    rate = rospy.Rate(2)
+    # Extract board information
+    board = jetson.board
+    # Define Diagnostic array message
+    # http://docs.ros.org/api/diagnostic_msgs/html/msg/DiagnosticStatus.html
+    arr = DiagnosticArray()
+    arr.status = [
+        DiagnosticStatus(name='jetson_stats CPU', message='Jetson-stats CPU', hardware_id="NVIDIA Jetson"),
+        DiagnosticStatus(name='jetson_stats GPU', message='jetson-stats GPU', hardware_id="NVIDIA Jetson")
+    ]
     # Initialization Tegrastats
-    with Tegrastats() as jetson:
-        while not rospy.is_shutdown():
-            jtop_str = "jtop message %s" % rospy.get_time()
-            rospy.loginfo(jtop_str)
-            pub.publish(jtop_str)
-            rate.sleep()
+    while not rospy.is_shutdown():
+        jtop_str = "jtop message %s" % rospy.get_time()
+        rospy.loginfo(jtop_str)
+        pub.publish(arr)
+        rate.sleep()
 
 
 if __name__ == '__main__':
     try:
-        wrapper()
+        # Initialization ros node
+        rospy.init_node('jtop', anonymous=True)
+        # Run Tegrastats jetson
+        with Tegrastats() as jetson:
+            wrapper(jetson)
     except rospy.ROSInterruptException:
         pass
