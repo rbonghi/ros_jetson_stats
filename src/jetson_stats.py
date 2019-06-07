@@ -31,7 +31,7 @@
 
 import rospy
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus
-from jtop import Tegrastats
+from jtop import jtop
 
 
 def wrapper(jetson):
@@ -61,7 +61,7 @@ if __name__ == '__main__':
         # Initialization ros node
         rospy.init_node('jtop', anonymous=True)
         # Run Tegrastats jetson
-        with Tegrastats() as jetson:
+        with jtop() as jetson:
             wrapper(jetson)
     except rospy.ROSInterruptException:
         pass
