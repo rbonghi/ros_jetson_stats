@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-# Copyright (C) 2019, Raffaello Bonghi <raffaello@rnext.it>
+# Copyright (C) 2020, Raffaello Bonghi <raffaello@rnext.it>
 # All rights reserved
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,9 +30,23 @@
 
 
 import rospy
-from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus
+from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 from jtop import jtop
 
+def cpu_status(hardware, cpu):
+    val = cpu['val']
+    status = cpu['status']
+    # Make Dianostic Status message with cpu info
+    d_cpu = DiagnosticStatus(name='jetson_stats cpu {}'.format(cpu['name']),
+                             message='{}% status {}'.format(val, status),
+                             hardware_id=hardware,
+                             values=[
+                                 KeyValue("Status", "{}".format(cpu['status'])),
+                                 KeyValue("Governor", "{}".format(cpu['governor'])),
+                                 KeyValue("Val", "{}%".format(val)),
+                                 KeyValue("Freq", "{}Mhz".format(cpu['frq'])),
+                                     ])
+    return d_cpu
 
 def wrapper(jetson):
     # Initialization ros pubblisher
@@ -41,27 +55,43 @@ def wrapper(jetson):
     rate = rospy.Rate(2)
     # Extract board information
     board = jetson.board
+    # rospy.loginfo("board {}".format(board))
+    # Define hardware name
+    hardware = board["board"]["Name"]
     # Define Diagnostic array message
     # http://docs.ros.org/api/diagnostic_msgs/html/msg/DiagnosticStatus.html
     arr = DiagnosticArray()
-    arr.status = [
-        DiagnosticStatus(name='jetson_stats CPU', message='Jetson-stats CPU', hardware_id=board["board"]["name"]),
-        DiagnosticStatus(name='jetson_stats GPU', message='jetson-stats GPU', hardware_id=board["board"]["name"])
-    ]
     # Initialization Tegrastats
     while not rospy.is_shutdown():
-        jtop_str = "jtop message %s" % rospy.get_time()
-        rospy.loginfo(jtop_str)
+        # Save all stats
+        stats = jetson.stats
+        # Add timestamp
+        arr.header.stamp = rospy.Time.now()
+        # Make diagnostic message for each cpu
+        d_cpus = [cpu_status(hardware, cpu) for cpu in stats['CPU']]
+        # Status GPU
+        gpu = stats['GR3D']
+        d_gpu = DiagnosticStatus(name='jetson_stats gpu',
+                               message='{}%'.format(gpu['val']),
+                               hardware_id=hardware,
+                               values=[KeyValue('Val', '{}%'.format(gpu['val']))])
+        # Merge all diagnostic status
+        arr.status = d_cpus + [d_gpu]
+        # Update status jtop
+        rospy.loginfo("jtop message %s" % rospy.get_time())
         pub.publish(arr)
+        # rospy.loginfo("board {}".format(jetson.stats))
         rate.sleep()
 
 
 if __name__ == '__main__':
     try:
         # Initialization ros node
-        rospy.init_node('jtop', anonymous=True)
+        rospy.init_node('jtop_node')
         # Run Tegrastats jetson
         with jtop() as jetson:
             wrapper(jetson)
     except rospy.ROSInterruptException:
+        pass
+    except KeyboardInterrupt:
         pass

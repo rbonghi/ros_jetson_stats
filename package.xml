@@ -1,0 +1,17 @@
+<package format="2">
+  <name>ros_jetson_stats</name>
+  <version>0.5.0</version>
+  <description>
+    ros_jetson_stats is a bridge from jetson-stats to your ROS controller
+  </description>
+  <maintainer email="raffaello@rnext.it">Raffaello Bonghi</maintainer>
+  <license>MIT</license>
+
+  <url>http://ros.org/wiki/ros_jetson_stats</url>
+  <author>Raffaello Bonghi</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>rospy</depend>
+  <depend>diagnostic_msgs</depend>
+</package>

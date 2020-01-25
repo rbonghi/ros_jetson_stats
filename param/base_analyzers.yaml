@@ -1,0 +1,13 @@
+analyzers:
+  jtop:
+    type: diagnostic_aggregator/AnalyzerGroup
+    path: jetson_stats
+    analyzers:
+      cpu:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: cpu
+        find_and_remove_prefix: 'cpu'
+      gpu:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: gpu
+        find_and_remove_prefix: 'gpu'
