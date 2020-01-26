@@ -32,6 +32,49 @@
 from diagnostic_msgs.msg import DiagnosticStatus, KeyValue
 
 
+def strfdelta(tdelta, fmt):
+    """ Print delta time
+        - https://stackoverflow.com/questions/8906926/formatting-python-timedelta-objects
+    """
+    d = {"days": tdelta.days}
+    d["hours"], rem = divmod(tdelta.seconds, 3600)
+    d["minutes"], d["seconds"] = divmod(rem, 60)
+    return fmt.format(**d)
+
+
+def board_status(hardware, board):
+    """
+    Board information and libraries installed
+    """
+    values = []
+    for key, value in board['board'].items():
+        values += [KeyValue(key, "{value}".format(value=value))]
+    for key, value in board['libraries'].items():
+        values += [KeyValue("lib " + key, "{value}".format(value=value))]
+    # Make board diagnostic status
+    d_board = DiagnosticStatus(name='jetson_stats board',
+                              message='Jetpack {jetpack}'.format(jetpack=board['board']['Jetpack']),
+                              hardware_id=hardware,
+                              values=values)
+    return d_board
+
+
+def disk_status(hardware, disk):
+    """
+    Status disk
+    """
+    # value=int(float(disk['used']) / float(disk['total']) * 100.0)
+    # Make board diagnostic status
+    d_board = DiagnosticStatus(name='jetson_stats disk',
+                              message="{0:2.1f}GB/{1:2.1f}GB".format(disk['used'], disk['total']),
+                              hardware_id=hardware,
+                              values=[
+                                  KeyValue("Used", "{used:2.1f}GB".format(used=disk['used'])),
+                                  KeyValue("Total", "{total:2.1f}GB".format(total=disk['total'])),
+                              ])
+    return d_board
+
+
 def cpu_status(hardware, cpu):
     """
     Decode a cpu stats
@@ -47,7 +90,7 @@ def cpu_status(hardware, cpu):
     status = cpu['status']
     # Make Dianostic Status message with cpu info
     d_cpu = DiagnosticStatus(name='jetson_stats cpu {name}'.format(name=cpu['name']),
-                             message='status={status} {val}%'.format(val=val, status=status),
+                             message='{status} - {val}%'.format(val=val, status=status),
                              hardware_id=hardware,
                              values=[KeyValue("Status", "{status}".format(status=cpu['status'])),
                                      KeyValue("Governor", "{governor}".format(governor=cpu['governor'])),
@@ -120,15 +163,15 @@ def ram_status(hardware, ram):
     lfb_status = ram['lfb']
     # value = int(ram['use'] / float(ram['tot']) * 100.0)
     unit_name = 'G'  # TODO improve with check unit status
-    percent = "{use:2.1f}{unit}/{tot:2.1f}{unit}B".format(use=ram['use'] / 1000.0,
-                                                          unit=unit_name,
-                                                          tot=ram['tot'] / 1000.0),
     # Make ram diagnostic status
     d_ram = DiagnosticStatus(name='jetson_stats ram',
-                             message='{percent} (lfb {nblock}x{size}{unit}B)'.format(percent=percent,
-                                                                                     nblock=lfb_status['nblock'],
-                                                                                     size=lfb_status['size'],
-                                                                                     unit=lfb_status['unit']),
+                             message='{use:2.1f}{unit_ram}/{tot:2.1f}{unit_ram}B (lfb {nblock}x{size}{unit}B)'.format(
+                                                                        use=ram['use'] / 1000.0,
+                                                                        unit_ram=unit_name,
+                                                                        tot=ram['tot'] / 1000.0,
+                                                                        nblock=lfb_status['nblock'],
+                                                                        size=lfb_status['size'],
+                                                                        unit=lfb_status['unit']),
                              hardware_id=hardware,
                              values=[KeyValue("Use", "{use:2.1f}{unit}B".format(use=ram['use'] / 1000.0, unit=unit_name)),
                                      KeyValue("Total", "{tot:2.1f}{unit}B".format(tot=ram['tot'] / 1000.0, unit=unit_name)),
@@ -214,10 +257,10 @@ def temp_status(hardware, temp):
     """
     values = []
     for key, value in temp.items():
-        values += [KeyValue(key, "{value:8.2f}C".format(curr=value))]
+        values += [KeyValue(key, "{value:8.2f}C".format(value=value))]
     # Make temperature diagnostic status
     d_temp = DiagnosticStatus(name='jetson_stats temp',
-                              message='temp n={n_temp}'.format(n_temp=len(temp)),
+                              message='{n_temp} temperatures reads'.format(n_temp=len(temp)),
                               hardware_id=hardware,
                               values=values)
     return d_temp
