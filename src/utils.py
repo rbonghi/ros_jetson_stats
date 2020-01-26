@@ -33,7 +33,16 @@ from diagnostic_msgs.msg import DiagnosticStatus, KeyValue
 
 
 def cpu_status(hardware, cpu):
-    # 'CPU': {'status': 'ON', 'frq': 204, 'name': 'CPU1', 'val': 8, 'governor': 'schedutil'}
+    """
+    Decode a cpu stats
+
+    Fields:
+     - 'status': 'ON'
+     - 'frq': 204
+     - 'name': 'CPU1'
+     - 'val': 8
+     - 'governor': 'schedutil'
+    """
     val = cpu['val']
     status = cpu['status']
     # Make Dianostic Status message with cpu info
@@ -48,7 +57,13 @@ def cpu_status(hardware, cpu):
     return d_cpu
 
 
-def gpu_status(harware, gpu):
+def gpu_status(hardware, gpu):
+    """
+    Decode and build a diagnostic status message
+
+    Fields:
+     - 'val': 10
+    """
     d_gpu = DiagnosticStatus(name='jetson_stats gpu',
                                 message='{val}%'.format(val=gpu['val']),
                                 hardware_id=hardware,
@@ -57,7 +72,17 @@ def gpu_status(harware, gpu):
 
 
 def fan_status(hardware, fan):
-    # 'FAN': {'status': 'ON', 'ctrl': True, 'cap': 255, 'tpwm': 0, 'step': 100, 'cpwm': 0}
+    """
+    Fan speed and type of control
+
+    Fields:
+     - 'status': 'ON'
+     - 'ctrl': True
+     - 'cap': 255
+     - 'tpwm': 0
+     - 'step': 100
+     - 'cpwm': 0
+    """
     if 'cpwm' in fan:
         if 'ctrl' in fan:
             ctrl = "Ta" if fan.get("ctrl", False) else "Tm"
@@ -78,9 +103,42 @@ def fan_status(hardware, fan):
                                 ])
     return d_fan
 
+
+def ram_status(hardware, ram):
+    """
+    Make a RAM diagnostic status message
+
+    Fields:
+        - 'use': 1325
+        - 'unit': 'M'
+        - 'tot': 3964
+        - 'lfb': 
+            - 'nblock': 411
+            - 'unit': 'M'
+            - 'size': 4
+    """
+    lfb_status = ram['lfb']
+    # value = int(ram['use'] / float(ram['tot']) * 100.0)
+    unit_name = 'G'  # TODO improve with check unit status
+    label = "(lfb {nblock}x{size}{unit}B)".format(nblock=lfb_status['nblock'],
+                                                  size=lfb_status['size'],
+                                                  unit=lfb_status['unit']),
+    percent = "{use:2.1f}{unit}/{tot:2.1f}{unit}B".format(use=ram['use'] / 1000.0,
+                                                          unit=unit_name,
+                                                          tot=ram['tot'] / 1000.0),
+    # Make fan diagnostic status
+    d_ram = DiagnosticStatus(name='jetson_stats ram',
+                        message='{percent} {label}'.format(percent=percent, label=label),
+                        hardware_id=hardware,
+                        values=[KeyValue("Use", "{use:2.1f}{unit}B".format(use=ram['use'] / 1000.0, unit=unit_name)),
+                                KeyValue("Total", "{tot:2.1f}{unit}B".format(tot=ram['tot'] / 1000.0, unit=unit_name)),
+                                KeyValue("lfb", "{lfb}%".format(lfb=label)),
+                                ])
+    return d_ram
+
 # 'EMC': {'val': 0}, 
 # 'TEMP': {u'AO': 40.0, u'PMIC': 100.0, u'iwlwifi': 36.0, u'thermal': 31.0, u'GPU': 31.0, u'PLL': 28.5, u'CPU': 31.0},
-# 'RAM': {'use': 1325, 'unit': u'M', 'tot': 3964, 'lfb': {'nblock': 411, 'unit': u'M', 'size': 4}},
+
 # 'VOLT': {'POM_5V_CPU': {'avg': 712, 'cur': 212}, 'POM_5V_IN': {'avg': 1891, 'cur': 1271}, 'POM_5V_GPU': {'avg': 31, 'cur': 0}},
 # 'SWAP': {'cached': {'unit': u'M', 'size': 0}, 'use': 0, 'unit': u'M', 'tot': 1982},
 
