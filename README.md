@@ -24,3 +24,8 @@ Run the demo following this roslaunch file
 ```elm
 roslaunch ros_jetson_stats jetson_stats.launch
 ```
+Wath your NVDIA Jetson stats from your runtime_monitor
+```elm
+rosrun rqt_runtime_monitor rqt_runtime_monitor
+```
+![runtime_monitor](.github/runtime_monitor.png)
