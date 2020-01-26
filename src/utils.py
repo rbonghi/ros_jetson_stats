@@ -120,13 +120,10 @@ def ram_status(hardware, ram):
     lfb_status = ram['lfb']
     # value = int(ram['use'] / float(ram['tot']) * 100.0)
     unit_name = 'G'  # TODO improve with check unit status
-    label = "(lfb {nblock}x{size}{unit}B)".format(nblock=lfb_status['nblock'],
-                                                  size=lfb_status['size'],
-                                                  unit=lfb_status['unit']),
     percent = "{use:2.1f}{unit}/{tot:2.1f}{unit}B".format(use=ram['use'] / 1000.0,
                                                           unit=unit_name,
                                                           tot=ram['tot'] / 1000.0),
-    # Make fan diagnostic status
+    # Make ram diagnostic status
     d_ram = DiagnosticStatus(name='jetson_stats ram',
                              message='{percent} (lfb {nblock}x{size}{unit}B)'.format(percent=percent,
                                                                                      nblock=lfb_status['nblock'],
@@ -163,7 +160,7 @@ def swap_status(hardware, swap):
         elif 'M' == swap['unit']:
             unit = 'G'
         divider = 1000.0
-    # Make fan diagnostic status
+    # Make swap diagnostic status
     d_swap = DiagnosticStatus(name='jetson_stats swap',
                               message='{use}{unit}B/{tot}{unit}B (cached {size}{unit}B)'.format(
                                                                                 use=swap.get('use', 0) / divider,
@@ -194,7 +191,7 @@ def voltage_status(hardware, volt):
         values += [KeyValue(key, "curr={curr}mW avg={avg}mW".format(curr=int(value['cur']), avg=int(value['avg'])))]
         tot['cur'] += value['cur']
         tot['avg'] += value['avg']
-    # Make fan diagnostic status
+    # Make voltage diagnostic status
     d_volt = DiagnosticStatus(name='jetson_stats volt',
                               message='curr={curr}mW avg={avg}mW'.format(curr=int(tot['cur']), avg=int(tot['avg'])),
                               hardware_id=hardware,
@@ -202,8 +199,39 @@ def voltage_status(hardware, volt):
     return d_volt
 
 
-# 'EMC': {'val': 0}, 
-# 'TEMP': {u'AO': 40.0, u'PMIC': 100.0, u'iwlwifi': 36.0, u'thermal': 31.0, u'GPU': 31.0, u'PLL': 28.5, u'CPU': 31.0},
+def temp_status(hardware, temp):
+    """
+    Make a temperature diagnostic message
 
+    Fields:
+     - 'AO': 40.0
+     - 'PMIC': 100.0
+     - 'iwlwifi': 36.0
+     - 'thermal': 31.0
+     - 'GPU': 31.0
+     - 'PLL': 28.5
+     - 'CPU': 31.0
+    """
+    values = []
+    for key, value in temp.items():
+        values += [KeyValue(key, "{value:8.2f}C".format(curr=value))]
+    # Make temperature diagnostic status
+    d_temp = DiagnosticStatus(name='jetson_stats temp',
+                              message='temp n={n_temp}'.format(n_temp=len(temp)),
+                              hardware_id=hardware,
+                              values=values)
+    return d_temp
 
+def emc_status(hardware, emc):
+    """
+    Make a EMC diagnostic message
+
+    Fields:
+     - 'val': 0
+    """
+    # Make EMC diagnostic status
+    d_emc = DiagnosticStatus(name='jetson_stats emc',
+                              message='{val}%'.format(val=emc['val']),
+                              hardware_id=hardware)
+    return d_emc
 # EOF

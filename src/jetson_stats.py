@@ -38,7 +38,9 @@ from utils import (cpu_status,
                    gpu_status,
                    ram_status,
                    swap_status,
-                   voltage_status)
+                   voltage_status,
+                   temp_status,
+                   emc_status)
 
 
 def wrapper(jetson):
@@ -73,6 +75,10 @@ def wrapper(jetson):
             arr.status += [fan_status(hardware, stats['FAN'])]
         if 'VOLT' in stats:
             arr.status += [voltage_status(hardware, stats['VOLT'])]
+        if 'TEMP' in stats:
+            arr.status += [temp_status(hardware, stats['TEMP'])]
+        if 'EMC' in stats:
+            arr.status += [emc_status(hardware, stats['EMC'])]
         # Update status jtop
         rospy.logdebug("jtop message %s" % rospy.get_time())
         pub.publish(arr)
