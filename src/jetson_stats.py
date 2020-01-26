@@ -69,7 +69,7 @@ def other_status(hardware, jetson):
         else:
             level = DiagnosticStatus.ERROR
         # Show if JetsonClock is enabled or not
-        values += [KeyValue("Jetson_clock" , "{jc_status}".format(jc_status=jc_status))]
+        values += [KeyValue("Jetson Clocks" , "{jc_status}".format(jc_status=jc_status))]
         values += [KeyValue("Enable" , "{enable}".format(enable=jc.enable))]
         text += " - JC {jc_status}".format(jc_status=jc_status)
     # Uptime
