@@ -32,21 +32,9 @@
 import rospy
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 from jtop import jtop
+# Import Diagnostic status converters
+from utils import cpu_status, fan_status, gpu_status
 
-def cpu_status(hardware, cpu):
-    val = cpu['val']
-    status = cpu['status']
-    # Make Dianostic Status message with cpu info
-    d_cpu = DiagnosticStatus(name='jetson_stats cpu {}'.format(cpu['name']),
-                             message='{}% status {}'.format(val, status),
-                             hardware_id=hardware,
-                             values=[
-                                 KeyValue("Status", "{}".format(cpu['status'])),
-                                 KeyValue("Governor", "{}".format(cpu['governor'])),
-                                 KeyValue("Val", "{}%".format(val)),
-                                 KeyValue("Freq", "{}Mhz".format(cpu['frq'])),
-                                     ])
-    return d_cpu
 
 def wrapper(jetson):
     # Initialization ros pubblisher
@@ -68,19 +56,18 @@ def wrapper(jetson):
         # Add timestamp
         arr.header.stamp = rospy.Time.now()
         # Make diagnostic message for each cpu
-        d_cpus = [cpu_status(hardware, cpu) for cpu in stats['CPU']]
+        arr.status = [cpu_status(hardware, cpu) for cpu in stats['CPU']]
         # Status GPU
-        gpu = stats['GR3D']
-        d_gpu = DiagnosticStatus(name='jetson_stats gpu',
-                               message='{}%'.format(gpu['val']),
-                               hardware_id=hardware,
-                               values=[KeyValue('Val', '{}%'.format(gpu['val']))])
-        # Merge all diagnostic status
-        arr.status = d_cpus + [d_gpu]
+        if 'GR3D' in stats:
+            # Merge all diagnostic status
+            arr.status += [gpu_status(hardware, stats['GR3D'])]
+        # Status FAN
+        if 'FAN' in stats:
+            # Merge all diagnostic status
+            arr.status += [fan_status(hardware, stats['FAN'])]
         # Update status jtop
         rospy.loginfo("jtop message %s" % rospy.get_time())
         pub.publish(arr)
-        # rospy.loginfo("board {}".format(jetson.stats))
         rate.sleep()
 
 
