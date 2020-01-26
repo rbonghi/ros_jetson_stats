@@ -75,6 +75,8 @@ def other_status(hardware, jetson):
     # Uptime
     uptime_string = strfdelta(timedelta(seconds=jetson.uptime), "{days} days {hours}:{minutes}:{seconds}")
     values += [KeyValue("Up Time" , "{time}".format(time=uptime_string))]
+    # Jtop version
+    values += [KeyValue("jtop" , "v{version}".format(version=jetson.version))]
     # Make board diagnostic status
     status = DiagnosticStatus(level=level,
                               name='jetson_stats',
