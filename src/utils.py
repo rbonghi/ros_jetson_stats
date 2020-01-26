@@ -32,6 +32,13 @@
 from diagnostic_msgs.msg import DiagnosticStatus, KeyValue
 
 
+level_options = {
+    60: DiagnosticStatus.ERROR,
+    40: DiagnosticStatus.WARN,
+    20: DiagnosticStatus.OK,
+}
+
+
 def strfdelta(tdelta, fmt):
     """ Print delta time
         - https://stackoverflow.com/questions/8906926/formatting-python-timedelta-objects
@@ -63,15 +70,22 @@ def disk_status(hardware, disk):
     """
     Status disk
     """
-    # value=int(float(disk['used']) / float(disk['total']) * 100.0)
+    value=int(float(disk['used']) / float(disk['total']) * 100.0)
+    if value >= 90:
+        level = DiagnosticStatus.ERROR
+    elif value >= 70:
+        level = DiagnosticStatus.WARN
+    else:
+        level = DiagnosticStatus.OK
     # Make board diagnostic status
-    d_board = DiagnosticStatus(name='jetson_stats disk',
-                              message="{0:2.1f}GB/{1:2.1f}GB".format(disk['used'], disk['total']),
-                              hardware_id=hardware,
-                              values=[
-                                  KeyValue("Used", "{used:2.1f}GB".format(used=disk['used'])),
-                                  KeyValue("Total", "{total:2.1f}GB".format(total=disk['total'])),
-                              ])
+    d_board = DiagnosticStatus(level=level,
+                               name='jetson_stats disk',
+                               message="{0:2.1f}GB/{1:2.1f}GB".format(disk['used'], disk['total']),
+                               hardware_id=hardware,
+                               values=[
+                                   KeyValue("Used", "{used:2.1f}GB".format(used=disk['used'])),
+                                   KeyValue("Total", "{total:2.1f}GB".format(total=disk['total'])),
+                               ])
     return d_board
 
 
@@ -256,10 +270,21 @@ def temp_status(hardware, temp):
      - 'CPU': 31.0
     """
     values = []
+    level = DiagnosticStatus.OK
+    list_options = sorted(level_options.keys(), reverse=True)
+    max_temp = 0
     for key, value in temp.items():
         values += [KeyValue(key, "{value:8.2f}C".format(value=value))]
+        if key != "PMIC":
+            max_temp = value if value > max_temp else max_temp
+    # Make status message
+    for k in list_options:
+        if max_temp >= k:
+            level = level_options[k]
+            break
     # Make temperature diagnostic status
-    d_temp = DiagnosticStatus(name='jetson_stats temp',
+    d_temp = DiagnosticStatus(level=level,
+                              name='jetson_stats temp',
                               message='{n_temp} temperatures reads'.format(n_temp=len(temp)),
                               hardware_id=hardware,
                               values=values)
