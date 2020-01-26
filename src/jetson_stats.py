@@ -33,7 +33,12 @@ import rospy
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 from jtop import jtop
 # Import Diagnostic status converters
-from utils import cpu_status, fan_status, gpu_status, ram_status
+from utils import (cpu_status,
+                   fan_status,
+                   gpu_status,
+                   ram_status,
+                   swap_status,
+                   voltage_status)
 
 
 def wrapper(jetson):
@@ -62,10 +67,14 @@ def wrapper(jetson):
             arr.status += [gpu_status(hardware, stats['GR3D'])]
         if 'RAM' in stats:
             arr.status += [ram_status(hardware, stats['RAM'])]
+        if 'SWAP' in stats:
+            arr.status += [swap_status(hardware, stats['SWAP'])]
         if 'FAN' in stats:
             arr.status += [fan_status(hardware, stats['FAN'])]
+        if 'VOLT' in stats:
+            arr.status += [voltage_status(hardware, stats['VOLT'])]
         # Update status jtop
-        rospy.loginfo("jtop message %s" % rospy.get_time())
+        rospy.logdebug("jtop message %s" % rospy.get_time())
         pub.publish(arr)
         rate.sleep()
 
