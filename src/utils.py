@@ -49,7 +49,7 @@ def strfdelta(tdelta, fmt):
     return fmt.format(**d)
 
 
-def board_status(hardware, board):
+def board_status(hardware, board, dgtype):
     """
     Board information and libraries installed
     """
@@ -59,14 +59,14 @@ def board_status(hardware, board):
     for key, value in board['libraries'].items():
         values += [KeyValue("lib " + key, "{value}".format(value=value))]
     # Make board diagnostic status
-    d_board = DiagnosticStatus(name='jetson_stats board',
+    d_board = DiagnosticStatus(name='jetson_stats {type} config'.format(type=dgtype),
                               message='Jetpack {jetpack}'.format(jetpack=board['board']['Jetpack']),
                               hardware_id=hardware,
                               values=values)
     return d_board
 
 
-def disk_status(hardware, disk):
+def disk_status(hardware, disk, dgtype):
     """
     Status disk
     """
@@ -79,7 +79,7 @@ def disk_status(hardware, disk):
         level = DiagnosticStatus.OK
     # Make board diagnostic status
     d_board = DiagnosticStatus(level=level,
-                               name='jetson_stats disk',
+                               name='jetson_stats {type} disk'.format(type=dgtype),
                                message="{0:2.1f}GB/{1:2.1f}GB".format(disk['used'], disk['total']),
                                hardware_id=hardware,
                                values=[
@@ -128,7 +128,7 @@ def gpu_status(hardware, gpu):
     return d_gpu
 
 
-def fan_status(hardware, fan):
+def fan_status(hardware, fan, dgtype):
     """
     Fan speed and type of control
 
@@ -151,7 +151,7 @@ def fan_status(hardware, fan):
         label = ''
         value = fan.get('tpwm', 0)
     # Make fan diagnostic status
-    d_fan = DiagnosticStatus(name='jetson_stats fan',
+    d_fan = DiagnosticStatus(name='jetson_stats {type} fan'.format(type=dgtype),
                              message='speed={speed}% {label}'.format(speed=value, label=label),
                              hardware_id=hardware,
                              values=[KeyValue("Status", "{status}".format(status=fan['status'])),
@@ -161,7 +161,7 @@ def fan_status(hardware, fan):
     return d_fan
 
 
-def ram_status(hardware, ram):
+def ram_status(hardware, ram, dgtype):
     """
     Make a RAM diagnostic status message
 
@@ -178,7 +178,7 @@ def ram_status(hardware, ram):
     # value = int(ram['use'] / float(ram['tot']) * 100.0)
     unit_name = 'G'  # TODO improve with check unit status
     # Make ram diagnostic status
-    d_ram = DiagnosticStatus(name='jetson_stats ram',
+    d_ram = DiagnosticStatus(name='jetson_stats {type} ram'.format(type=dgtype),
                              message='{use:2.1f}{unit_ram}/{tot:2.1f}{unit_ram}B (lfb {nblock}x{size}{unit}B)'.format(
                                                                         use=ram['use'] / 1000.0,
                                                                         unit_ram=unit_name,
@@ -195,7 +195,7 @@ def ram_status(hardware, ram):
                                      ])
     return d_ram
 
-def swap_status(hardware, swap):
+def swap_status(hardware, swap, dgtype):
     """
     Make a swap diagnostic message
 
@@ -218,7 +218,7 @@ def swap_status(hardware, swap):
             unit = 'G'
         divider = 1000.0
     # Make swap diagnostic status
-    d_swap = DiagnosticStatus(name='jetson_stats swap',
+    d_swap = DiagnosticStatus(name='jetson_stats {type} swap'.format(type=dgtype),
                               message='{use}{unit}B/{tot}{unit}B (cached {size}{unit}B)'.format(
                                                                                 use=swap.get('use', 0) / divider,
                                                                                 tot=swap.get('tot', 0) / divider,
@@ -233,9 +233,9 @@ def swap_status(hardware, swap):
     return d_swap
 
 
-def voltage_status(hardware, volt):
+def power_status(hardware, power):
     """
-    Make a volt diagnostic message
+    Make a Power diagnostic message
 
     Fields:
      - 'POM_5V_CPU': {'avg': 712, 'cur': 212}
@@ -244,12 +244,12 @@ def voltage_status(hardware, volt):
     """
     values = []
     tot = {'cur': 0, 'avg': 0}
-    for key, value in volt.items():
+    for key, value in power.items():
         values += [KeyValue(key, "curr={curr}mW avg={avg}mW".format(curr=int(value['cur']), avg=int(value['avg'])))]
         tot['cur'] += value['cur']
         tot['avg'] += value['avg']
     # Make voltage diagnostic status
-    d_volt = DiagnosticStatus(name='jetson_stats volt',
+    d_volt = DiagnosticStatus(name='jetson_stats power',
                               message='curr={curr}mW avg={avg}mW'.format(curr=int(tot['cur']), avg=int(tot['avg'])),
                               hardware_id=hardware,
                               values=values)
@@ -290,7 +290,7 @@ def temp_status(hardware, temp):
                               values=values)
     return d_temp
 
-def emc_status(hardware, emc):
+def emc_status(hardware, emc, dgtype):
     """
     Make a EMC diagnostic message
 
@@ -298,7 +298,7 @@ def emc_status(hardware, emc):
      - 'val': 0
     """
     # Make EMC diagnostic status
-    d_emc = DiagnosticStatus(name='jetson_stats emc',
+    d_emc = DiagnosticStatus(name='jetson_stats {type} emc'.format(type=dgtype),
                               message='{val}%'.format(val=emc['val']),
                               hardware_id=hardware)
     return d_emc

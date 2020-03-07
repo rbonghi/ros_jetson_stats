@@ -42,7 +42,7 @@ from utils import (strfdelta,
                    gpu_status,
                    ram_status,
                    swap_status,
-                   voltage_status,
+                   power_status,
                    temp_status,
                    emc_status)
 
@@ -79,7 +79,7 @@ def other_status(hardware, jetson):
     values += [KeyValue("jtop" , "v{version}".format(version=jetson.version))]
     # Make board diagnostic status
     status = DiagnosticStatus(level=level,
-                              name='jetson_stats',
+                              name='jetson_stats board status',
                               message=text,
                               hardware_id=hardware,
                               values=values)
@@ -111,21 +111,21 @@ def wrapper(jetson):
         if 'GR3D' in stats:
             arr.status += [gpu_status(hardware, stats['GR3D'])]
         if 'RAM' in stats:
-            arr.status += [ram_status(hardware, stats['RAM'])]
+            arr.status += [ram_status(hardware, stats['RAM'], 'mem')]
         if 'SWAP' in stats:
-            arr.status += [swap_status(hardware, stats['SWAP'])]
+            arr.status += [swap_status(hardware, stats['SWAP'], 'mem')]
+        if 'EMC' in stats:
+            arr.status += [emc_status(hardware, stats['EMC'], 'mem')]
         if 'FAN' in stats:
-            arr.status += [fan_status(hardware, stats['FAN'])]
+            arr.status += [fan_status(hardware, stats['FAN'], 'board')]
         if 'VOLT' in stats:
-            arr.status += [voltage_status(hardware, stats['VOLT'])]
+            arr.status += [power_status(hardware, stats['VOLT'])]
         if 'TEMP' in stats:
             arr.status += [temp_status(hardware, stats['TEMP'])]
-        if 'EMC' in stats:
-            arr.status += [emc_status(hardware, stats['EMC'])]
         # Status board and board info
-        arr.status += [board_status(hardware, board)]
+        arr.status += [board_status(hardware, board, 'board')]
         # Add disk status
-        arr.status += [disk_status(hardware, jetson.disk)]
+        arr.status += [disk_status(hardware, jetson.disk, 'board')]
         # Update status jtop
         rospy.logdebug("jtop message %s" % rospy.get_time())
         pub.publish(arr)

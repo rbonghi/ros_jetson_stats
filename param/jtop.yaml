@@ -1,0 +1,36 @@
+analyzers:
+  jtop:
+    type: diagnostic_aggregator/AnalyzerGroup
+    path: jtop
+    contains: 'jetson_stats'
+    analyzers:
+      cpu:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: CPU
+        contains: 'cpu'
+        remove_prefix: jetson_stats cpu
+      gpu:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: GPU
+        contains: 'gpu'
+        remove_prefix: jetson_stats
+      memory:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: Memory
+        contains: 'mem'
+        remove_prefix: jetson_stats mem
+      temperatures:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: Temperatures
+        contains: 'temp'
+        remove_prefix: jetson_stats
+      power:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: Power
+        contains: 'power'
+        remove_prefix: jetson_stats
+      board:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: board
+        contains: 'board'
+        remove_prefix: jetson_stats board

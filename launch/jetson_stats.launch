@@ -31,6 +31,6 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
     <!-- Enable a base diagnostic aggregator to read the status of your NVIDIA Jetson -->
     <node pkg="diagnostic_aggregator" type="aggregator_node" name="diagnostic_aggregator" clear_params="true">
-        <rosparam command="load" file="$(find ros_jetson_stats)/param/base_analyzers.yaml"/>
+        <rosparam command="load" file="$(find ros_jetson_stats)/param/jtop.yaml"/>
     </node>
 </launch>
