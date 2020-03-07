@@ -15,7 +15,7 @@ sudo -H pip install -U jetson-stats
 
 Add in your launch file the `ros_jetson_stats` package following
 ```xml
-<node pkg="ros_jetson_stats" type="jetson_stats.py" name="ros_jetson_stats""/>
+<node pkg="ros_jetson_stats" type="jetson_stats.py" name="ros_jetson_stats"/>
 ```
 
 # Run the demo
