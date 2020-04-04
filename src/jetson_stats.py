@@ -59,19 +59,19 @@ def other_status(hardware, jetson):
         text += "NV Power[{num}] {name}".format(num=nvpmodel.num, name=nvpmodel.mode)
     jc = jetson.jetson_clocks
     if jc is not None:
-        jc_status = jc.status
-        if jc_status == "active":
+        jc_service = jc.service
+        if jc_service == "active":
             level = DiagnosticStatus.OK
-        elif jc_status == "inactive":
+        elif jc_service == "inactive":
             level = DiagnosticStatus.OK
-        elif "ing" in jc_status:
+        elif "ing" in jc_service:
             level = DiagnosticStatus.WARN
         else:
             level = DiagnosticStatus.ERROR
         # Show if JetsonClock is enabled or not
-        values += [KeyValue("Jetson Clocks" , "{jc_status}".format(jc_status=jc_status))]
+        values += [KeyValue("Jetson Clocks" , "{jc_service}".format(jc_service=jc_service))]
         values += [KeyValue("Enable" , "{enable}".format(enable=jc.enable))]
-        text += " - JC {jc_status}".format(jc_status=jc_status)
+        text += " - JC {jc_service}".format(jc_service=jc_service)
     # Uptime
     uptime_string = strfdelta(timedelta(seconds=jetson.uptime), "{days} days {hours}:{minutes}:{seconds}")
     values += [KeyValue("Up Time" , "{time}".format(time=uptime_string))]
@@ -93,7 +93,7 @@ def wrapper(jetson):
     # Extract board information
     board = jetson.board
     # Define hardware name
-    hardware = board["board"]["Name"]
+    hardware = board["info"]["Machine"]
     # Define Diagnostic array message
     # http://docs.ros.org/api/diagnostic_msgs/html/msg/DiagnosticStatus.html
     arr = DiagnosticArray()
@@ -118,8 +118,8 @@ def wrapper(jetson):
             arr.status += [emc_status(hardware, stats['EMC'], 'mem')]
         if 'FAN' in stats:
             arr.status += [fan_status(hardware, stats['FAN'], 'board')]
-        if 'VOLT' in stats:
-            arr.status += [power_status(hardware, stats['VOLT'])]
+        if 'WATT' in stats:
+            arr.status += [power_status(hardware, stats['WATT'])]
         if 'TEMP' in stats:
             arr.status += [temp_status(hardware, stats['TEMP'])]
         # Status board and board info

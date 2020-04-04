@@ -60,7 +60,7 @@ def board_status(hardware, board, dgtype):
         values += [KeyValue("lib " + key, "{value}".format(value=value))]
     # Make board diagnostic status
     d_board = DiagnosticStatus(name='jetson_stats {type} config'.format(type=dgtype),
-                              message='Jetpack {jetpack}'.format(jetpack=board['board']['Jetpack']),
+                              message='Jetpack {jetpack}'.format(jetpack=board['info']['Jetpack']),
                               hardware_id=hardware,
                               values=values)
     return d_board
@@ -272,20 +272,36 @@ def temp_status(hardware, temp):
     values = []
     level = DiagnosticStatus.OK
     list_options = sorted(level_options.keys(), reverse=True)
-    max_temp = 0
+    max_temp = 20
+    # Remove from list PMIC temperature
+    if 'PMIC' in temp:
+        del temp['PMIC']
     for key, value in temp.items():
         values += [KeyValue(key, "{value:8.2f}C".format(value=value))]
-        if key != "PMIC":
-            max_temp = value if value > max_temp else max_temp
+        if value > max_temp:
+            # Add last high temperature
+            max_temp = value
     # Make status message
-    for k in list_options:
-        if max_temp >= k:
-            level = level_options[k]
+    for th in list_options:
+        if max_temp >= th:
+            level = level_options[th]
             break
+
+    if level is not DiagnosticStatus.OK:
+        max_temp_names = []
+        # List off names
+        for key, value in temp.items():
+            if value >= th:
+                # Store name
+                max_temp_names += [key]
+        # Write a message
+        message = '[' + ', '.join(max_temp_names) + '] are more than 40 C'
+    else:
+        message = '{n_temp} temperatures reads'.format(n_temp=len(temp))
     # Make temperature diagnostic status
     d_temp = DiagnosticStatus(level=level,
                               name='jetson_stats temp',
-                              message='{n_temp} temperatures reads'.format(n_temp=len(temp)),
+                              message=message,
                               hardware_id=hardware,
                               values=values)
     return d_temp
