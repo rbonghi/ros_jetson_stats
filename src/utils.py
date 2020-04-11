@@ -32,13 +32,6 @@
 from diagnostic_msgs.msg import DiagnosticStatus, KeyValue
 
 
-level_options = {
-    60: DiagnosticStatus.ERROR,
-    40: DiagnosticStatus.WARN,
-    20: DiagnosticStatus.OK,
-}
-
-
 def strfdelta(tdelta, fmt):
     """ Print delta time
         - https://stackoverflow.com/questions/8906926/formatting-python-timedelta-objects
@@ -103,14 +96,15 @@ def cpu_status(hardware, cpu):
     val = cpu['val']
     status = cpu['status']
     # Make Dianostic Status message with cpu info
+    values = [KeyValue("Status", "{status}".format(status=cpu['status'])),
+              KeyValue("Val", "{val}%".format(val=val)),
+              KeyValue("Freq", "{frq}Mhz".format(frq=cpu['frq']))]
+    if 'governor' in cpu: 
+        values += [KeyValue("Governor", "{governor}".format(governor=cpu['governor']))]
     d_cpu = DiagnosticStatus(name='jetson_stats cpu {name}'.format(name=cpu['name']),
                              message='{status} - {val}%'.format(val=val, status=status),
                              hardware_id=hardware,
-                             values=[KeyValue("Status", "{status}".format(status=cpu['status'])),
-                                     KeyValue("Governor", "{governor}".format(governor=cpu['governor'])),
-                                     KeyValue("Val", "{val}%".format(val=val)),
-                                     KeyValue("Freq", "{frq}Mhz".format(frq=cpu['frq'])),
-                                     ])
+                             values=values)
     return d_cpu
 
 
@@ -256,7 +250,7 @@ def power_status(hardware, power):
     return d_volt
 
 
-def temp_status(hardware, temp):
+def temp_status(hardware, temp, level_options):
     """
     Make a temperature diagnostic message
 

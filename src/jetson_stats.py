@@ -86,10 +86,18 @@ def other_status(hardware, jetson):
     return status
 
 def wrapper(jetson):
+    # Load level options
+    level_options = {
+        rospy.get_param("~level/error", 60): DiagnosticStatus.ERROR,
+        rospy.get_param("~level/warning", 40): DiagnosticStatus.WARN,
+        rospy.get_param("~level/ok", 20): DiagnosticStatus.OK,
+    }
+    rospy.loginfo(level_options)
     # Initialization ros pubblisher
     pub = rospy.Publisher('/diagnostics', DiagnosticArray, queue_size=1)
     # Set default rate jetson stats 2hz
-    rate = rospy.Rate(2)
+    rate_node = rospy.get_param("~rate", 2)
+    rate = rospy.Rate(rate_node)
     # Extract board information
     board = jetson.board
     # Define hardware name
@@ -121,7 +129,7 @@ def wrapper(jetson):
         if 'WATT' in stats:
             arr.status += [power_status(hardware, stats['WATT'])]
         if 'TEMP' in stats:
-            arr.status += [temp_status(hardware, stats['TEMP'])]
+            arr.status += [temp_status(hardware, stats['TEMP'], level_options)]
         # Status board and board info
         arr.status += [board_status(hardware, board, 'board')]
         # Add disk status
@@ -136,10 +144,13 @@ if __name__ == '__main__':
     try:
         # Initialization ros node
         rospy.init_node('jtop_node')
+        # Load default interval speed
+        interval = rospy.get_param("~interval", 500)
         # Run Tegrastats jetson
-        with jtop() as jetson:
+        with jtop(interval=interval) as jetson:
             wrapper(jetson)
     except rospy.ROSInterruptException:
         pass
     except KeyboardInterrupt:
         pass
+# EOF
