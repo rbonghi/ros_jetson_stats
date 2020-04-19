@@ -93,16 +93,23 @@ def cpu_status(hardware, cpu):
      - 'val': 8
      - 'governor': 'schedutil'
     """
-    val = cpu['val']
     status = cpu['status']
-    # Make Dianostic Status message with cpu info
-    values = [KeyValue("Status", "{status}".format(status=cpu['status'])),
-              KeyValue("Val", "{val}%".format(val=val)),
-              KeyValue("Freq", "{frq}Mhz".format(frq=cpu['frq']))]
-    if 'governor' in cpu: 
-        values += [KeyValue("Governor", "{governor}".format(governor=cpu['governor']))]
+    if status == 'ON':
+        # read value
+        val = cpu['val']
+        message = '{status} - {val}%'.format(val=val, status=status)
+        # Make Dianostic Status message with cpu info
+        values = [KeyValue("Status", "{status}".format(status=status)),
+                KeyValue("Val", "{val}%".format(val=val)),
+                KeyValue("Freq", "{frq}Mhz".format(frq=cpu['frq']))]
+        if 'governor' in cpu: 
+            values += [KeyValue("Governor", "{governor}".format(governor=cpu['governor']))]
+    else:
+        values = [] 
+        message = '{status}'.format(status=status)
+    # Make Diagnostic message
     d_cpu = DiagnosticStatus(name='jetson_stats cpu {name}'.format(name=cpu['name']),
-                             message='{status} - {val}%'.format(val=val, status=status),
+                             message=message,
                              hardware_id=hardware,
                              values=values)
     return d_cpu
