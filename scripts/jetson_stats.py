@@ -34,7 +34,7 @@ from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 from datetime import timedelta
 from jtop import jtop
 # Import Diagnostic status converters
-from utils import (strfdelta,
+from ros_jetson_stats.utils import (strfdelta,
                    board_status,
                    disk_status,
                    cpu_status,
