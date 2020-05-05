@@ -9,5 +9,5 @@ catkin_package()
 
 include_directories()
 
-catkin_install_python(PROGRAMS src/jetson_stats.py
+catkin_install_python(PROGRAMS scripts/jetson_stats.py
                       DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
