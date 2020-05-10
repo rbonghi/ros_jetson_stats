@@ -29,7 +29,19 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+from copy import deepcopy
 from diagnostic_msgs.msg import DiagnosticStatus, KeyValue
+
+
+def size_min(num, divider=1.0, n=0, start=''):
+    if num >= divider * 1000.0:
+        n += 1
+        divider *= 1000.0
+        return size_min(num, divider, n, start)
+    else:
+        vect = ['', 'k', 'M', 'G', 'T']
+        idx = vect.index(start)
+        return round(num / divider, 1), divider, vect[n + idx]
 
 
 def strfdelta(tdelta, fmt):
@@ -176,20 +188,19 @@ def ram_status(hardware, ram, dgtype):
             - 'size': 4
     """
     lfb_status = ram['lfb']
-    # value = int(ram['use'] / float(ram['tot']) * 100.0)
-    unit_name = 'G'  # TODO improve with check unit status
+    tot_ram, divider, unit_name = size_min(ram.get('tot', 0), start=ram.get('unit', 'M'))
     # Make ram diagnostic status
     d_ram = DiagnosticStatus(name='jetson_stats {type} ram'.format(type=dgtype),
                              message='{use:2.1f}{unit_ram}/{tot:2.1f}{unit_ram}B (lfb {nblock}x{size}{unit}B)'.format(
-                                                                        use=ram['use'] / 1000.0,
+                                                                        use=ram['use'] / divider,
                                                                         unit_ram=unit_name,
-                                                                        tot=ram['tot'] / 1000.0,
+                                                                        tot=tot_ram,
                                                                         nblock=lfb_status['nblock'],
                                                                         size=lfb_status['size'],
                                                                         unit=lfb_status['unit']),
                              hardware_id=hardware,
-                             values=[KeyValue("Use", "{use:2.1f}{unit}B".format(use=ram['use'] / 1000.0, unit=unit_name)),
-                                     KeyValue("Total", "{tot:2.1f}{unit}B".format(tot=ram['tot'] / 1000.0, unit=unit_name)),
+                             values=[KeyValue("Use", "{use:2.1f}{unit}B".format(use=ram['use'] / divider, unit=unit_name)),
+                                     KeyValue("Total", "{tot:2.1f}{unit}B".format(tot=ram['tot'] / divider, unit=unit_name)),
                                      KeyValue("lfb", "{nblock}x{size}{unit}B".format(nblock=lfb_status['nblock'],
                                                                                      size=lfb_status['size'],
                                                                                      unit=lfb_status['unit'])),
@@ -209,22 +220,15 @@ def swap_status(hardware, swap, dgtype):
             - 'size': 0
     """
     swap_cached = swap.get('cached', {})
-    if swap.get('tot', 0) < 1000:
-        unit = swap['unit']
-        divider = 1.0
-    if swap.get('tot', 0) > 1000:
-        if 'k' == swap['unit']:
-            unit = 'M'
-        elif 'M' == swap['unit']:
-            unit = 'G'
-        divider = 1000.0
+    tot_swap, divider, unit = size_min(swap.get('tot', 0), start=swap.get('unit', 'k'))
+    message = '{use}{unit_swap}B/{tot}{unit}B (cached {size}{unit}B)'.format(use=swap.get('use', 0) / divider,
+                                                                             tot=tot_swap,
+                                                                             unit_swap=unit,
+                                                                             size=swap_cached.get('size', '0'),
+                                                                             unit=swap_cached.get('unit', ''))
     # Make swap diagnostic status
     d_swap = DiagnosticStatus(name='jetson_stats {type} swap'.format(type=dgtype),
-                              message='{use}{unit}B/{tot}{unit}B (cached {size}{unit}B)'.format(
-                                                                                use=swap.get('use', 0) / divider,
-                                                                                tot=swap.get('tot', 0) / divider,
-                                                                                size=swap_cached.get('size', '0'),
-                                                                                unit=swap_cached.get('unit', '')),
+                              message=message,
                               hardware_id=hardware,
                               values=[KeyValue("Use", "{use:2.1f}{unit}B".format(use=swap['use'] / divider, unit=unit)),
                                       KeyValue("Total", "{tot:2.1f}{unit}B".format(tot=swap['tot'] / divider, unit=unit)),
@@ -244,14 +248,28 @@ def power_status(hardware, power):
      - 'POM_5V_GPU': {'avg': 31, 'cur': 0}}
     """
     values = []
-    tot = {'cur': 0, 'avg': 0}
-    for key, value in power.items():
-        values += [KeyValue(key, "curr={curr}mW avg={avg}mW".format(curr=int(value['cur']), avg=int(value['avg'])))]
-        tot['cur'] += value['cur']
-        tot['avg'] += value['avg']
+    total_name = ""
+    for val in power:
+        if "_IN" in val:
+            total_name = val
+            break
+    # https://forums.developer.nvidia.com/t/xavier-jetson-total-power-consumption/81016
+    if total_name:
+        total = power[total_name]
+        del power[total_name]
+    else:
+        total = {'cur': 0, 'avg': 0}
+    # Make list power
+    for watt in sorted(power):
+        value = power[watt]
+        watt_name = watt.replace("VDD_", "").replace("POM_", "").replace("_", " ")
+        values += [KeyValue(watt_name, "curr={curr}mW avg={avg}mW".format(curr=int(value['cur']), avg=int(value['avg'])))]
+        if not total_name:
+            total['cur'] += value['cur']
+            total['avg'] += value['avg']
     # Make voltage diagnostic status
     d_volt = DiagnosticStatus(name='jetson_stats power',
-                              message='curr={curr}mW avg={avg}mW'.format(curr=int(tot['cur']), avg=int(tot['avg'])),
+                              message='curr={curr}mW avg={avg}mW'.format(curr=int(total['cur']), avg=int(total['avg'])),
                               hardware_id=hardware,
                               values=values)
     return d_volt

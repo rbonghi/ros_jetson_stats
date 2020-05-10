@@ -35,16 +35,16 @@ from datetime import timedelta
 from jtop import jtop
 # Import Diagnostic status converters
 from ros_jetson_stats.utils import (strfdelta,
-                   board_status,
-                   disk_status,
-                   cpu_status,
-                   fan_status,
-                   gpu_status,
-                   ram_status,
-                   swap_status,
-                   power_status,
-                   temp_status,
-                   emc_status)
+                                    board_status,
+                                    disk_status,
+                                    cpu_status,
+                                    fan_status,
+                                    gpu_status,
+                                    ram_status,
+                                    swap_status,
+                                    power_status,
+                                    temp_status,
+                                    emc_status)
 
 
 def other_status(hardware, jetson):
