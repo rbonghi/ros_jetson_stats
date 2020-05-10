@@ -236,7 +236,7 @@ def swap_status(hardware, swap, dgtype):
                               hardware_id=hardware,
                               values=[KeyValue("Use", "{use}".format(use=swap.get('use', 0))),
                                       KeyValue("Total", "{tot}".format(tot=swap.get('tot', 0))),
-                                      KeyValue("Total", "{unit}B".format(unit=swap.get('unit', 'M'))),
+                                      KeyValue("Unit", "{unit}B".format(unit=swap.get('unit', 'M'))),
                                       KeyValue("Cached", "{size}{unit}B".format(size=swap_cached.get('size', '0'),
                                                                                 unit=swap_cached.get('unit', ''))),
                                       ])
