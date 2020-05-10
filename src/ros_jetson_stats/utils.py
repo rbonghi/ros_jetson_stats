@@ -112,8 +112,9 @@ def cpu_status(hardware, cpu):
         message = '{status} - {val}%'.format(val=val, status=status)
         # Make Dianostic Status message with cpu info
         values = [KeyValue("Status", "{status}".format(status=status)),
-                KeyValue("Val", "{val}%".format(val=val)),
-                KeyValue("Freq", "{frq}Mhz".format(frq=cpu['frq']))]
+                  KeyValue("Val", "{val}%".format(val=val)),
+                  KeyValue("Freq", "{frq}".format(frq=cpu['frq'])),
+                  KeyValue("Unit", "Mhz")]
         if 'governor' in cpu: 
             values += [KeyValue("Governor", "{governor}".format(governor=cpu['governor']))]
     else:
@@ -191,7 +192,7 @@ def ram_status(hardware, ram, dgtype):
     tot_ram, divider, unit_name = size_min(ram.get('tot', 0), start=ram.get('unit', 'M'))
     # Make ram diagnostic status
     d_ram = DiagnosticStatus(name='jetson_stats {type} ram'.format(type=dgtype),
-                             message='{use:2.1f}{unit_ram}/{tot:2.1f}{unit_ram}B (lfb {nblock}x{size}{unit}B)'.format(
+                             message='{use:2.1f}{unit_ram}B/{tot:2.1f}{unit_ram}B (lfb {nblock}x{size}{unit}B)'.format(
                                                                         use=ram['use'] / divider,
                                                                         unit_ram=unit_name,
                                                                         tot=tot_ram,
@@ -199,13 +200,15 @@ def ram_status(hardware, ram, dgtype):
                                                                         size=lfb_status['size'],
                                                                         unit=lfb_status['unit']),
                              hardware_id=hardware,
-                             values=[KeyValue("Use", "{use:2.1f}{unit}B".format(use=ram['use'] / divider, unit=unit_name)),
-                                     KeyValue("Total", "{tot:2.1f}{unit}B".format(tot=ram['tot'] / divider, unit=unit_name)),
+                             values=[KeyValue("Use", "{use:2.1f}".format(use=ram['use'] / divider)),
+                                     KeyValue("Total", "{tot:2.1f}".format(tot=ram['tot'] / divider)),
+                                     KeyValue("Unit", "{unit}B".format(unit=unit_name)),
                                      KeyValue("lfb", "{nblock}x{size}{unit}B".format(nblock=lfb_status['nblock'],
                                                                                      size=lfb_status['size'],
                                                                                      unit=lfb_status['unit'])),
                                      ])
     return d_ram
+
 
 def swap_status(hardware, swap, dgtype):
     """
@@ -230,8 +233,9 @@ def swap_status(hardware, swap, dgtype):
     d_swap = DiagnosticStatus(name='jetson_stats {type} swap'.format(type=dgtype),
                               message=message,
                               hardware_id=hardware,
-                              values=[KeyValue("Use", "{use:2.1f}{unit}B".format(use=swap['use'] / divider, unit=unit)),
-                                      KeyValue("Total", "{tot:2.1f}{unit}B".format(tot=swap['tot'] / divider, unit=unit)),
+                              values=[KeyValue("Use", "{use:2.1f}".format(use=swap['use'] / divider)),
+                                      KeyValue("Total", "{tot:2.1f}".format(tot=swap['tot'] / divider)),
+                                      KeyValue("Total", "{unit}B".format(unit=unit)),
                                       KeyValue("Cached", "{size}{unit}B".format(size=swap_cached.get('size', '0'),
                                                                                 unit=swap_cached.get('unit', ''))),
                                       ])
@@ -314,7 +318,7 @@ def temp_status(hardware, temp, level_options):
                 # Store name
                 max_temp_names += [key]
         # Write a message
-        message = '[' + ', '.join(max_temp_names) + '] are more than 40 C'
+        message = '[' + ', '.join(max_temp_names) + '] are more than {temp} C'.format(temp=th)
     else:
         message = '{n_temp} temperatures reads'.format(n_temp=len(temp))
     # Make temperature diagnostic status
@@ -324,6 +328,7 @@ def temp_status(hardware, temp, level_options):
                               hardware_id=hardware,
                               values=values)
     return d_temp
+
 
 def emc_status(hardware, emc, dgtype):
     """
