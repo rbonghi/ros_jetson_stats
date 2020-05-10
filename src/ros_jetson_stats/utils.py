@@ -88,8 +88,9 @@ def disk_status(hardware, disk, dgtype):
                                message="{0:2.1f}GB/{1:2.1f}GB".format(disk['used'], disk['total']),
                                hardware_id=hardware,
                                values=[
-                                   KeyValue("Used", "{used:2.1f}GB".format(used=disk['used'])),
-                                   KeyValue("Total", "{total:2.1f}GB".format(total=disk['total'])),
+                                   KeyValue("Used", "{used:2.1f}".format(used=disk['used'])),
+                                   KeyValue("Total", "{total:2.1f}".format(total=disk['total'])),
+                                   KeyValue("Unit", "GB"),
                                ])
     return d_board
 
@@ -200,9 +201,9 @@ def ram_status(hardware, ram, dgtype):
                                                                         size=lfb_status['size'],
                                                                         unit=lfb_status['unit']),
                              hardware_id=hardware,
-                             values=[KeyValue("Use", "{use:2.1f}".format(use=ram['use'] / divider)),
-                                     KeyValue("Total", "{tot:2.1f}".format(tot=ram['tot'] / divider)),
-                                     KeyValue("Unit", "{unit}B".format(unit=unit_name)),
+                             values=[KeyValue("Use", "{use}".format(use=ram.get('use', 0))),
+                                     KeyValue("Total", "{tot}".format(tot=ram.get('tot', 0))),
+                                     KeyValue("Unit", "{unit}B".format(unit=ram.get('unit', 'M'))),
                                      KeyValue("lfb", "{nblock}x{size}{unit}B".format(nblock=lfb_status['nblock'],
                                                                                      size=lfb_status['size'],
                                                                                      unit=lfb_status['unit'])),
@@ -223,8 +224,8 @@ def swap_status(hardware, swap, dgtype):
             - 'size': 0
     """
     swap_cached = swap.get('cached', {})
-    tot_swap, divider, unit = size_min(swap.get('tot', 0), start=swap.get('unit', 'k'))
-    message = '{use}{unit_swap}B/{tot}{unit}B (cached {size}{unit}B)'.format(use=swap.get('use', 0) / divider,
+    tot_swap, divider, unit = size_min(swap.get('tot', 0), start=swap.get('unit', 'M'))
+    message = '{use}{unit_swap}B/{tot}{unit_swap}B (cached {size}{unit}B)'.format(use=swap.get('use', 0) / divider,
                                                                              tot=tot_swap,
                                                                              unit_swap=unit,
                                                                              size=swap_cached.get('size', '0'),
@@ -233,9 +234,9 @@ def swap_status(hardware, swap, dgtype):
     d_swap = DiagnosticStatus(name='jetson_stats {type} swap'.format(type=dgtype),
                               message=message,
                               hardware_id=hardware,
-                              values=[KeyValue("Use", "{use:2.1f}".format(use=swap['use'] / divider)),
-                                      KeyValue("Total", "{tot:2.1f}".format(tot=swap['tot'] / divider)),
-                                      KeyValue("Total", "{unit}B".format(unit=unit)),
+                              values=[KeyValue("Use", "{use}".format(use=swap.get('use', 0))),
+                                      KeyValue("Total", "{tot}".format(tot=swap.get('tot', 0))),
+                                      KeyValue("Total", "{unit}B".format(unit=swap.get('unit', 'M'))),
                                       KeyValue("Cached", "{size}{unit}B".format(size=swap_cached.get('size', '0'),
                                                                                 unit=swap_cached.get('unit', ''))),
                                       ])
