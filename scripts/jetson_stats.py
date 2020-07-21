@@ -32,58 +32,21 @@
 import rospy
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 from datetime import timedelta
-from jtop import jtop
+import jtop
 # Import Diagnostic status converters
-from ros_jetson_stats.utils import (strfdelta,
-                                    board_status,
-                                    disk_status,
-                                    cpu_status,
-                                    fan_status,
-                                    gpu_status,
-                                    ram_status,
-                                    swap_status,
-                                    power_status,
-                                    temp_status,
-                                    emc_status)
+from ros_jetson_stats.utils import (
+    other_status,
+    board_status,
+    disk_status,
+    cpu_status,
+    fan_status,
+    gpu_status,
+    ram_status,
+    swap_status,
+    power_status,
+    temp_status,
+    emc_status)
 
-
-def other_status(hardware, jetson):
-    """
-    Generic informations about jetson_clock and nvpmdel
-    """
-    values = []
-    nvpmodel = jetson.nvpmodel
-    text = ""
-    if nvpmodel is not None:
-        values += [KeyValue("NV Power" , "{num} - {name}".format(num=nvpmodel.num, name=nvpmodel.mode))]
-        text += "NV Power[{num}] {name}".format(num=nvpmodel.num, name=nvpmodel.mode)
-    jc = jetson.jetson_clocks
-    if jc is not None:
-        jc_service = jc.service
-        if jc_service == "active":
-            level = DiagnosticStatus.OK
-        elif jc_service == "inactive":
-            level = DiagnosticStatus.OK
-        elif "ing" in jc_service:
-            level = DiagnosticStatus.WARN
-        else:
-            level = DiagnosticStatus.ERROR
-        # Show if JetsonClock is enabled or not
-        values += [KeyValue("Jetson Clocks" , "{jc_service}".format(jc_service=jc_service))]
-        values += [KeyValue("Enable" , "{enable}".format(enable=jc.enable))]
-        text += " - JC {jc_service}".format(jc_service=jc_service)
-    # Uptime
-    uptime_string = strfdelta(timedelta(seconds=jetson.uptime), "{days} days {hours}:{minutes}:{seconds}")
-    values += [KeyValue("Up Time" , "{time}".format(time=uptime_string))]
-    # Jtop version
-    values += [KeyValue("jtop" , "v{version}".format(version=jetson.version))]
-    # Make board diagnostic status
-    status = DiagnosticStatus(level=level,
-                              name='jetson_stats board status',
-                              message=text,
-                              hardware_id=hardware,
-                              values=values)
-    return status
 
 def wrapper(jetson):
     # Load level options
@@ -93,43 +56,37 @@ def wrapper(jetson):
         rospy.get_param("~level/ok", 20): DiagnosticStatus.OK,
     }
     rospy.loginfo(level_options)
-    # Initialization ros pubblisher
+    # Initialization ros publisher
     pub = rospy.Publisher('/diagnostics', DiagnosticArray, queue_size=1)
-    # Set default rate jetson stats 2hz
-    rate_node = rospy.get_param("~rate", 2)
-    rate = rospy.Rate(rate_node)
     # Extract board information
     board = jetson.board
     # Define hardware name
-    hardware = board["info"]["Machine"]
+    hardware = board["info"]["machine"]
     # Define Diagnostic array message
     # http://docs.ros.org/api/diagnostic_msgs/html/msg/DiagnosticStatus.html
     arr = DiagnosticArray()
-    # Initialization Tegrastats
-    while not rospy.is_shutdown():
-        # Save all stats
-        stats = jetson.stats
+    # Initialization jtop
+    while not rospy.is_shutdown() and jetson.ok():
         # Add timestamp
         arr.header.stamp = rospy.Time.now()
         # Status board and board info
-        arr.status = [other_status(hardware, jetson)]
+        arr.status = [other_status(hardware, jetson, jtop.__version__)]
         # Make diagnostic message for each cpu
-        arr.status += [cpu_status(hardware, cpu) for cpu in stats['CPU']]
+        arr.status += [cpu_status(hardware, name, jetson.cpu[name]) for name in jetson.cpu]
         # Merge all other diagnostics
-        if 'GR3D' in stats:
-            arr.status += [gpu_status(hardware, stats['GR3D'])]
-        if 'RAM' in stats:
-            arr.status += [ram_status(hardware, stats['RAM'], 'mem')]
-        if 'SWAP' in stats:
-            arr.status += [swap_status(hardware, stats['SWAP'], 'mem')]
-        if 'EMC' in stats:
-            arr.status += [emc_status(hardware, stats['EMC'], 'mem')]
-        if 'FAN' in stats:
-            arr.status += [fan_status(hardware, stats['FAN'], 'board')]
-        if 'WATT' in stats:
-            arr.status += [power_status(hardware, stats['WATT'])]
-        if 'TEMP' in stats:
-            arr.status += [temp_status(hardware, stats['TEMP'], level_options)]
+        arr.status += [gpu_status(hardware, jetson.gpu)]
+        arr.status += [ram_status(hardware, jetson.ram, 'mem')]
+        arr.status += [swap_status(hardware, jetson.swap, 'mem')]
+        arr.status += [emc_status(hardware, jetson.emc, 'mem')]
+        # Temperature
+        arr.status += [temp_status(hardware, jetson.temperature, level_options)]
+        # Read power
+        total, power = jetson.power
+        if power:
+            arr.status += [power_status(hardware, total, power)]
+        # Fan controller
+        if jetson.fan is not None:
+            arr.status += [fan_status(hardware, jetson.fan, 'board')]
         # Status board and board info
         arr.status += [board_status(hardware, board, 'board')]
         # Add disk status
@@ -137,7 +94,6 @@ def wrapper(jetson):
         # Update status jtop
         rospy.logdebug("jtop message %s" % rospy.get_time())
         pub.publish(arr)
-        rate.sleep()
 
 
 if __name__ == '__main__':
@@ -145,9 +101,9 @@ if __name__ == '__main__':
         # Initialization ros node
         rospy.init_node('jtop_node')
         # Load default interval speed
-        interval = rospy.get_param("~interval", 500)
-        # Run Tegrastats jetson
-        with jtop(interval=interval) as jetson:
+        interval = rospy.get_param("~interval", 0.5)
+        # Run jtop reader
+        with jtop.jtop(interval=interval) as jetson:
             wrapper(jetson)
     except rospy.ROSInterruptException:
         pass

@@ -27,7 +27,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
 <package format="2">
   <name>ros_jetson_stats</name>
-  <version>0.5.0</version>
+  <version>3.0.0</version>
   <description>ros_jetson_stats is a bridge from jetson-stats to your ROS controller</description>
 
   <maintainer email="raffaello@rnext.it">Raffaello Bonghi</maintainer>

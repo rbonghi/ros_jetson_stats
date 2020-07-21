@@ -4,7 +4,7 @@ A ROS wrapper [jetson-stats](https://github.com/rbonghi/jetson_stats) to ROS whe
 
 # Installation
 
-1. Check your NVIDIA board have insalled jetson-stats otherwise install it
+1. Check your NVIDIA board have installed jetson-stats otherwise install it
 ```elm
 sudo -H pip install -U jetson-stats
 ```
@@ -24,7 +24,7 @@ Run the demo following this roslaunch file
 ```elm
 roslaunch ros_jetson_stats jetson_stats.launch
 ```
-Wath your NVDIA Jetson stats from your runtime_monitor
+Watch your NVIDIA Jetson stats from your runtime_monitor
 ```elm
 rosrun rqt_runtime_monitor rqt_runtime_monitor
 ```
