@@ -39,6 +39,9 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
   <buildtool_depend>catkin</buildtool_depend>
 
+  <build_depend>genmsg</build_depend>
+
   <depend>rospy</depend>
+  <depend>std_msgs</depend>
   <depend>diagnostic_msgs</depend>
 </package>
