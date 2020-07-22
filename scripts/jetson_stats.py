@@ -31,7 +31,7 @@
 
 import rospy
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
-from ros_jetson_stats.srv import nvpmodel, nvpmodelResponse
+from ros_jetson_stats.srv import nvpmodel, nvpmodelResponse, jetson_clocks, jetson_clocksResponse, fan, fanResponse
 from datetime import timedelta
 import jtop
 # Import Diagnostic status converters
@@ -61,8 +61,10 @@ class ROSJtop:
         self.arr = DiagnosticArray()
         # Initialization ros publisher
         self.pub = rospy.Publisher('/diagnostics', DiagnosticArray, queue_size=1)
-        # Initialize nvpmodel service server
-        rospy.Service('nvpmodel', nvpmodel, self.nvpmodel_service)
+        # Initialize services server
+        rospy.Service('/jtop/nvpmodel', nvpmodel, self.nvpmodel_service)
+        rospy.Service('/jtop/jetson_clocks', jetson_clocks, self.jetson_clocks_service)
+        rospy.Service('/jtop/fan', fan, self.fan_service)
 
     def start(self):
         self.jetson.start()
@@ -80,10 +82,31 @@ class ROSJtop:
         rospy.loginfo("Close jtop")
         self.jetson.close()
 
+    def fan_service(self, req):
+        # Try to set new nvpmodel
+        fan_mode = req.mode
+        try:
+            self.jetson.fan.mode = fan_mode
+        except jtop.JtopException as e:
+            rospy.logerr(e)
+            # Return same nvp model
+            fan_mode = str(self.jetson.fan.mode)
+        return fanResponse(fan_mode)
+
+    def jetson_clocks_service(self, req):
+        # Set new jetson_clocks
+        self.jetson.jetson_clocks = req.status
+        return jetson_clocksResponse(req.status)
+
     def nvpmodel_service(self, req):
-        # New nvpmodel
+        # Try to set new nvpmodel
         nvpmodel = req.nvpmodel
-        rospy.loginfo(req)
+        try:
+            self.jetson.nvpmodel = nvpmodel
+        except jtop.JtopException as e:
+            rospy.logerr(e)
+            # Return same nvp model
+            nvpmodel = str(self.jetson.nvpmodel)
         return nvpmodelResponse(nvpmodel)
 
     def jetson_callback(self, jetson):
