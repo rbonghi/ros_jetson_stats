@@ -142,14 +142,14 @@ class ROSJtop:
 
 
 def wrapper():
+    # Initialization ros node
+    rospy.init_node('jtop_node')
     # Load level options
     level_options = {
         rospy.get_param("~level/error", 60): DiagnosticStatus.ERROR,
         rospy.get_param("~level/warning", 40): DiagnosticStatus.WARN,
         rospy.get_param("~level/ok", 20): DiagnosticStatus.OK,
     }
-    # Initialization ros node
-    rospy.init_node('jtop_node')
     # Initialization ROS jtop wrapper
     jetson = ROSJtop(level_options)
     rospy.loginfo(level_options)

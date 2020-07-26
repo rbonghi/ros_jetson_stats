@@ -334,14 +334,12 @@ def temp_status(hardware, temp, level_options):
     level = DiagnosticStatus.OK
     list_options = sorted(level_options.keys(), reverse=True)
     max_temp = 20
-    rospy.loginfo(level_options)
     # List all temperatures
     for key, value in temp.items():
         values += [KeyValue(key, "{value:8.2f}C".format(value=value))]
         if value > max_temp:
             # Add last high temperature
             max_temp = value
-    rospy.loginfo(max_temp)
     # Make status message
     for th in list_options:
         if max_temp >= th:
