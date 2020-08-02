@@ -62,8 +62,9 @@ def other_status(hardware, jetson, version):
     nvpmodel = jetson.nvpmodel
     text = ""
     if nvpmodel is not None:
-        values += [KeyValue("NV Power" , "{id} - {name}".format(id=nvpmodel.id, name=nvpmodel.name))]
-        text += "NV Power[{id}] {name}".format(id=nvpmodel.id, name=nvpmodel.name)
+        nvp_name = nvpmodel.name.replace('MODE_', '').replace('_', ' ')
+        values += [KeyValue("NV Power" , "{id} - {name}".format(id=nvpmodel.id, name=nvp_name))]
+        text += "NV Power[{id}] {name}".format(id=nvpmodel.id, name=nvp_name)
     jc = jetson.jetson_clocks
     if jetson.jetson_clocks is not None:
         if jetson.jetson_clocks.status in ["running", "inactive"]:
@@ -150,17 +151,19 @@ def cpu_status(hardware, name, cpu):
     message = 'OFF'
     values = []
     if cpu:
-        # read value
-        val = cpu['val']
-        message = '{val}%'.format(val=val)
-        # Make Diagnostic Status message with cpu info
-        values = [
-            KeyValue("Val", "{val}%".format(val=val)),
-            KeyValue("Freq", "{frq}".format(frq=cpu['frq'])),
-            KeyValue("Unit", "khz"),
-            KeyValue("Governor", "{governor}".format(governor=cpu['governor']))]
-        if 'model' in cpu:
-            values += [KeyValue("Model", "{model}".format(model=cpu['model']))]
+        if 'val' in cpu:
+            # read value
+            val = cpu['val']
+            message = '{val}%'.format(val=val)
+            # Make Diagnostic Status message with cpu info
+            values = [
+                KeyValue("Val", "{val}%".format(val=val)),
+                KeyValue("Freq", "{frq}".format(frq=cpu['frq'])),
+                KeyValue("Unit", "khz")]
+            if 'governor' in cpu:
+                values += [KeyValue("Governor", "{governor}".format(governor=cpu['governor']))]
+            if 'model' in cpu:
+                values += [KeyValue("Model", "{model}".format(model=cpu['model']))]
     # Make Diagnostic message
     d_cpu = DiagnosticStatus(
         name='jetson_stats cpu {name}'.format(name=name),

@@ -69,7 +69,9 @@ class ROSJtop:
     def start(self):
         self.jetson.start()
         if self.jetson.interval != self.jetson.interval_user:
-            rospy.logwarn("I cannot set {user:.2f}s. Service already running at {service:.2f}s".format(user=self.jetson.interval_user, service=self.jetson.interval))
+            rospy.logwarn("I cannot set {user:.2f}s. Service already running at {service:.2f}s".format(
+                user=self.jetson.interval_user,
+                service=self.jetson.interval))
         # Extract board information
         board = self.jetson.board
         # Define hardware name
