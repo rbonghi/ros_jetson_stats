@@ -39,4 +39,4 @@ Watch your NVIDIA Jetson stats from your runtime_monitor
 ```elm
 rosrun rqt_runtime_monitor rqt_runtime_monitor
 ```
-![runtime_monitor](.github/runtime_monitor.png)
+![runtime_monitor](.github/runtime_monitor.gif)
