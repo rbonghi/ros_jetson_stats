@@ -132,7 +132,7 @@ class ROSJtop:
         if power:
             self.arr.status += [power_status(self.hardware, total, power)]
         # Fan controller
-        if jetson.fan is not None:
+        if jetson.fan:
             self.arr.status += [fan_status(self.hardware, jetson.fan, 'board')]
         # Status board and board info
         self.arr.status += [self.board_status]
