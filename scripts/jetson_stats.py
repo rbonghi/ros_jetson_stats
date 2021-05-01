@@ -89,8 +89,11 @@ class ROSJtop:
     def fan_service(self, req):
         # Try to set new nvpmodel
         fan_mode = req.mode
+        fan_speed = req.fanSpeed
         try:
             self.jetson.fan.mode = fan_mode
+            if fan_mode == "manual":
+                self.jetson.fan.speed = fan_speed
         except jtop.JtopException as e:
             rospy.logerr(e)
             # Return same nvp model
