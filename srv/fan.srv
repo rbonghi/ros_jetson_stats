@@ -1,5 +1,6 @@
 # fan selection
 
 string mode
+int8 fanSpeed
 ---
 string done
