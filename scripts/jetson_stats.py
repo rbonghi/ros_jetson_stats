@@ -75,7 +75,7 @@ class ROSJtop:
         # Extract board information
         board = self.jetson.board
         # Define hardware name
-        self.hardware = board["info"]["machine"]
+        self.hardware = board["platform"]["Machine"]
         # Board status message
         self.board_status = board_status(self.hardware, board, 'board')
         # Set callback
@@ -124,7 +124,7 @@ class ROSJtop:
         # Make diagnostic message for each cpu
         self.arr.status += [cpu_status(self.hardware, name, jetson.cpu[name]) for name in jetson.cpu]
         # Merge all other diagnostics
-        self.arr.status += [gpu_status(self.hardware, jetson.gpu)]
+        self.arr.status += [gpu_status(self.hardware, jetson.gpu[1])]
         self.arr.status += [ram_status(self.hardware, jetson.ram, 'mem')]
         self.arr.status += [swap_status(self.hardware, jetson.swap, 'mem')]
         self.arr.status += [emc_status(self.hardware, jetson.emc, 'mem')]
